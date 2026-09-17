@@ -89,11 +89,11 @@ if [ "$FEDORA_VER" -lt 44 ]; then
 fi
 
 # ---------- 1. 安装 dnf-plugins-core ----------
-log_info "步骤 1/13: 安装 dnf-plugins-core..."
+log_info "步骤 1/14: 安装 dnf-plugins-core..."
 install_step "安装 dnf-plugins-core" dnf install -y dnf-plugins-core
 
 # ---------- 2. 配置 fastestmirror ----------
-log_info "步骤 2/13: 配置 DNF fastestmirror..."
+log_info "步骤 2/14: 配置 DNF fastestmirror..."
 DNF_CONF="/etc/dnf/dnf.conf"
 if grep -q "^fastestmirror" "$DNF_CONF" 2>/dev/null; then
     sed -i 's/^fastestmirror=.*/fastestmirror=True/' "$DNF_CONF"
@@ -109,7 +109,7 @@ log_info "fastestmirror=True 已配置。"
 # ---------- 3. 添加 RPM Fusion 仓库 ----------
 # [VERIFIED] 主 release 包路径实测 200:
 #   mirrors.rpmfusion.org/{free,nonfree}/fedora/rpmfusion-{free,nonfree}-release-44.noarch.rpm
-log_info "步骤 3/13: 添加 RPM Fusion 仓库 (free + nonfree)..."
+log_info "步骤 3/14: 添加 RPM Fusion 仓库 (free + nonfree)..."
 install_step "添加 RPM Fusion 仓库" \
     dnf install -y \
     "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${FEDORA_VER}.noarch.rpm" \
@@ -123,7 +123,7 @@ install_step "添加 RPM Fusion 仓库" \
 #     rpmfusion-free.repo / -updates.repo / -updates-testing.repo
 #   => v1~v4 的 "dnf install rpmfusion-*-release-tainted" 是无效操作。
 #   tainted 由 .repo 内的段提供且默认 enabled=0；存在才启用，不存在直接跳过。
-log_info "步骤 4/13: 检查 RPM Fusion tainted 子仓库..."
+log_info "步骤 4/14: 检查 RPM Fusion tainted 子仓库..."
 
 enable_repo() {
     local repo="$1"
@@ -148,7 +148,7 @@ for r in rpmfusion-free-tainted rpmfusion-nonfree-tainted; do
 done
 
 # ---------- 5. 系统完整更新 ----------
-log_info "步骤 5/13: 执行系统完整更新..."
+log_info "步骤 5/14: 执行系统完整更新..."
 install_step "系统完整更新" dnf update -y --refresh
 
 # needs-restarting -r: 返回 1 表示需要重启。它检测不到纯内核更新，故补内核比对。
@@ -163,7 +163,7 @@ if ! dnf needs-restarting -r >/dev/null 2>&1 || \
 fi
 
 # ---------- 6. AMD 显卡驱动与工具 ----------
-log_info "步骤 6/13: 检查并安装 AMD 显卡驱动组件..."
+log_info "步骤 6/14: 检查并安装 AMD 显卡驱动组件..."
 lspci -k | grep -E "VGA|3D|Display" || log_warn "未检测到显卡信息。"
 
 install_step "安装 Mesa 核心驱动" \
@@ -200,7 +200,7 @@ else
 fi
 
 # ---------- 7. 视频编解码器 ----------
-log_info "步骤 7/13: 完善视频编解码器..."
+log_info "步骤 7/14: 完善视频编解码器..."
 
 install_step "安装 GStreamer 基础包" \
     dnf install -y gstreamer1-plugins-base gstreamer1-plugins-good
@@ -221,7 +221,7 @@ install_step "安装 libavcodec-freeworld" dnf install -y libavcodec-freeworld
 #   备选 (git 快照): sudo dnf copr enable lionheartp/Hyprland
 #                    sudo dnf install noctalia-git
 # [VERIFIED] niri 在 Fedora 官方仓库 (pkgdb 200, 含 F43/44/45)
-log_info "步骤 8/13: 安装 niri 与 Noctalia v5..."
+log_info "步骤 8/14: 安装 niri 与 Noctalia v5..."
 
 install_step "安装 niri (Fedora 官方仓库)" dnf install -y niri
 install_step "安装 noctalia v5 (Fedora 44+ 默认仓库)" dnf install -y noctalia
@@ -240,7 +240,7 @@ install_step "安装 noctalia v5 (Fedora 44+ 默认仓库)" dnf install -y nocta
 #   有资料称 dnf5 的 --repofrompath 不再做该替换，但此说法未经权威确认。
 #   稳妥做法是保留官方写法 + 加 shell 展开兜底，两者任一成功即可。
 #   （注意：若字面量未被展开，URL 会变成 .../terra$releasever，实测 HTTP 404）
-log_info "步骤 9/13: 添加 Terra 仓库 (为 Noctalia Greeter)..."
+log_info "步骤 9/14: 添加 Terra 仓库 (为 Noctalia Greeter)..."
 
 # 封装：避免「官方写法失败但兜底成功」留下假失败记录
 add_terra_repo() {
@@ -279,7 +279,7 @@ fi
 # ---------- 10. 安装 Noctalia Greeter ----------
 # [官方文档 · 原文] sudo dnf install noctalia-greeter
 # 依赖: greetd 与 D-Bus —— 文档 "Every installation needs greetd and D-Bus"
-log_info "步骤 10/13: 安装 Noctalia Greeter..."
+log_info "步骤 10/14: 安装 Noctalia Greeter..."
 install_step "安装 greetd" dnf install -y greetd
 install_step "安装 noctalia-greeter (Terra)" dnf install -y noctalia-greeter
 
@@ -292,7 +292,7 @@ install_step "安装 noctalia-greeter (Terra)" dnf install -y noctalia-greeter
 #   - 某些发行版包会自动配置 greetd；此时只需确认 command 指向 wrapper，其余不动
 #
 # 最小安装没有旧 DM，故官方 §4「Replace the current display manager safely」不适用。
-log_info "步骤 11/13: 配置 greetd 会话..."
+log_info "步骤 11/14: 配置 greetd 会话..."
 
 GREETER_SESSION_BIN="$(command -v noctalia-greeter-session 2>/dev/null || true)"
 
@@ -411,7 +411,7 @@ fi
 #   完整美化配置引用了 shell=fish 与 JetBrains Maple Mono 字体。
 #   这两样不存在的话，kitty 会静默回退（默认 shell、默认字体），
 #   等于「配了但没生效」。所以一并准备好，保证美化真正落地。
-log_info "步骤 12/13: 安装 kitty + fish + 字体..."
+log_info "步骤 12/14: 安装 kitty + fish + 字体..."
 
 install_step "安装 kitty 终端与 fish" dnf install -y kitty fish
 
@@ -629,85 +629,891 @@ if command -v fish >/dev/null 2>&1; then
     fi
 fi
 
-# ---------- 13. 写入最小 niri 配置 ----------
-# 为什么要写？
-#   不写的话 niri 用内置默认配置:
-#     - 不会自启 Noctalia  -> 没有状态栏、没有壁纸、没有启动器
-#     - 默认终端绑 alacritty(未装) -> 开不了终端
-#   写一个最小配置，让首次登录就能看到 Noctalia 界面并打开终端。
+# ---------- 13. 安装常用桌面软件 ----------
+# 本步安装「装完即可日常使用」的软件，并处理非官方来源的两项：
+#   - Google Chrome : Fedora 官方仓库没有，从 Google 自己的 RPM 源装
+#   - QQ / 微信      : Fedora 无包，用 Flatpak（Flathub）装
+log_info "步骤 13/14: 安装常用桌面软件..."
+
+# --- 13.1 Fedora 官方仓库的软件 ---
+# fcitx5         : 中文输入法框架（含中文附加组件 + 图形配置工具）
+# Thunar         : 轻量文件管理器（GTK，适配 niri 无桌面环境的场景）
+# xprop          : X11 窗口属性查询 —— niri-force-kill-window 识别 XWayland 应用必需
+# fzf            : 模糊查找 —— niri-binds 快捷键速查菜单依赖
+# wl-clipboard   : wl-copy/wl-paste —— niri-pick 复制信息、截图管道依赖
+# satty          : 截图标注工具 —— 配合 wl-clipboard 编辑剪贴板里的截图
+install_step "安装 fcitx5 中文输入法" \
+    dnf install -y fcitx5 fcitx5-chinese-addons fcitx5-configtool fcitx5-gtk fcitx5-qt
+
+install_step "安装 Thunar 文件管理器" \
+    dnf install -y Thunar thunar-volman thunar-archive-plugin
+
+install_step "安装 xprop (窗口属性查询)" dnf install -y xprop
+install_step "安装 fzf (模糊查找)" dnf install -y fzf
+install_step "安装 wl-clipboard" dnf install -y wl-clipboard
+install_step "安装 satty (截图标注, Terra)" dnf install -y satty
+
+# --- 13.2 Google Chrome（来自 Google 官方 RPM 源）---
+# Fedora 官方仓库只有 chromium，没有 google-chrome。
+# Google 自己维护 RPM 仓库，官方推荐做法就是加它的 repo 再装。
+install_chrome() {
+    # 已装则跳过
+    if command -v google-chrome-stable >/dev/null 2>&1; then
+        log_info "  Google Chrome 已安装，跳过"
+        return 0
+    fi
+
+    # 导入 Google 签名密钥
+    local key=/etc/pki/rpm-gpg/RPM-GPG-KEY-google
+    if [ ! -f "$key" ]; then
+        if curl -fsSL --max-time 60 \
+            "https://dl.google.com/linux/linux_signing_key.pub" -o "$key"; then
+            log_info "  Google 签名密钥已导入: $key"
+        else
+            log_warn "  下载 Google 签名密钥失败（网络问题）"
+            log_warn "  手动安装: https://www.google.com/chrome/"
+            return 1
+        fi
+    fi
+
+    # 写入 Google 的 yum/dnf 仓库文件
+    cat > /etc/yum.repos.d/google-chrome.repo <<'CHROMEREPO'
+[google-chrome]
+name=google-chrome
+baseurl=https://dl.google.com/linux/chrome/rpm/stable/x86_64
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-google
+CHROMEREPO
+
+    log_info "  Google Chrome 仓库已写入 /etc/yum.repos.d/google-chrome.repo"
+    # 首次安装需要导入密钥，否则 gpgcheck 会失败
+    dnf install -y google-chrome-stable
+}
+
+install_step "安装 Google Chrome" install_chrome
+
+# --- 13.3 QQ / 微信（Flatpak）---
+# Fedora 仓库里没有这两个包。Flathub 有腾讯维护的官方包：
+#   com.qq.QQ          — QQ
+#   com.tencent.WeChat — 微信
+install_flatpak_apps() {
+    # 确认 flatpak 可用
+    if ! command -v flatpak >/dev/null 2>&1; then
+        log_warn "  flatpak 未安装，跳过 QQ/微信"
+        return 1
+    fi
+
+    # 添加 Flathub 远程源（已存在则跳过）
+    if ! flatpak remotes 2>/dev/null | grep -q '^flathub'; then
+        log_info "  添加 Flathub 远程源..."
+        if ! flatpak remote-add --if-not-exists flathub \
+            https://flathub.org/repo/flathub.flatpakrepo; then
+            log_warn "  添加 Flathub 失败（网络问题）"
+            log_warn "  手动执行: flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo"
+            return 1
+        fi
+    else
+        log_info "  Flathub 远程源已存在"
+    fi
+
+    local rc=0
+    # QQ
+    if flatpak list --app 2>/dev/null | grep -q 'com.qq.QQ'; then
+        log_info "  QQ 已安装，跳过"
+    else
+        log_info "  安装 QQ（首次会拉取运行时，体积较大，请耐心等待）..."
+        flatpak install -y --noninteractive flathub com.qq.QQ || {
+            log_warn "  QQ 安装失败（网络问题？可稍后手动: flatpak install flathub com.qq.QQ）"
+            rc=1
+        }
+    fi
+
+    # 微信
+    if flatpak list --app 2>/dev/null | grep -q 'com.tencent.WeChat'; then
+        log_info "  微信已安装，跳过"
+    else
+        log_info "  安装微信（同样会拉取运行时）..."
+        flatpak install -y --noninteractive flathub com.tencent.WeChat || {
+            log_warn "  微信安装失败（可稍后手动: flatpak install flathub com.tencent.WeChat）"
+            rc=1
+        }
+    fi
+    return $rc
+}
+
+install_step "安装 flatpak" dnf install -y flatpak
+install_step "安装 QQ 与微信 (Flatpak)" install_flatpak_apps
+
+# --- 13.4 部署 niri 辅助脚本 ---
+# niri-force-kill-window : 鼠标点选后 SIGKILL 强杀窗口（Alt+F4 / Alt+Shift+F4）
+#   依赖 xprop 识别 XWayland 应用（XWayland 的 PID 是代理，直接 kill 杀不掉真身）
+# niri-binds             : 扫描所有 .kdl 的键位绑定，用 fzf 弹出速查菜单
+# niri-pick              : 提取窗口信息（AppID/PID/标题）或屏幕吸色，写入剪贴板
+NIRI_SCRIPTS_DIR="$TARGET_HOME/.config/niri/scripts"
+
+deploy_niri_scripts() {
+    if ! mkdir -p "$NIRI_SCRIPTS_DIR"; then
+        log_warn "  无法创建 $NIRI_SCRIPTS_DIR"
+        return 1
+    fi
+
+    # niri-force-kill-window
+    cat > "$NIRI_SCRIPTS_DIR/niri-force-kill-window" <<'KILLEOF'
+#!/usr/bin/env bash
+# ============================================================================
+# niri-force-kill-window — 鼠标点选窗口并强制终止（SIGKILL）
 #
-# 与完整配置的关系: 这是最小可用集，仅覆盖「能开机用」所需的部分。
-#   更完整的桌面配置(starship/yazi/完整快捷键/matugen 联动)可另行部署。
-log_info "步骤 13/13: 写入最小 niri 配置..."
+# 用法:
+#   niri-force-kill-window      仅杀死该窗口的进程
+#   niri-force-kill-window -f   杀死该窗口的整个进程树（治自动重启的窗口）
+#
+# 来源: 参考 SHORiN-KiWATA/shorin-niri 的同名脚本行为重写
+# 依赖: niri (pick-window)、xprop（可选，用于 XWayland 应用）、libnotify
+# ============================================================================
+set -u
+
+FORCE_TREE=false
+[ "${1:-}" = "-f" ] && FORCE_TREE=true
+
+notify() {
+    command -v notify-send >/dev/null 2>&1 && notify-send "$1" "$2" || true
+}
+
+# 让用户点选窗口，拿到 PID
+PICKED="$(niri msg pick-window 2>/dev/null)" || {
+    notify "强杀窗口" "未选中窗口（操作已取消）"
+    exit 1
+}
+[ -z "$PICKED" ] && { notify "强杀窗口" "未选中窗口"; exit 1; }
+
+PID="$(printf '%s' "$PICKED" | sed -n 's/.*PID: \([0-9]*\).*/\1/p')"
+TITLE="$(printf '%s' "$PICKED" | sed -n 's/.*Title: "\(.*\)"/\1/p')"
+APPID="$(printf '%s' "$PICKED" | sed -n 's/.*App ID: "\(.*\)"/\1/p')"
+
+if [ -z "$PID" ]; then
+    notify "强杀窗口" "未能解析出 PID"
+    exit 1
+fi
+
+# XWayland 应用：niri 报的 PID 是 XWayland 代理，需要用 xprop 拿真实 PID
+if command -v xprop >/dev/null 2>&1 && command -v xwininfo >/dev/null 2>&1; then
+    XPID="$(xprop -root _NET_CLIENT_LIST 2>/dev/null | head -1 | grep -o '[0-9]\+' | head -1)"
+    if [ -n "${XPID:-}" ]; then
+        REAL="$(xprop -id "$XPID" _NET_WM_PID 2>/dev/null | grep -o '[0-9]\+$')"
+        [ -n "${REAL:-}" ] && PID="$REAL"
+    fi
+fi
+
+kill_target() {
+    local p="$1"
+    if [ "$FORCE_TREE" = true ]; then
+        # 向上溯源到应用根进程（跳过 niri/systemd/bash 等）
+        local root="$p"
+        local cur="$p"
+        local i=0
+        while [ $i -lt 16 ]; do
+            local ppid
+            ppid="$(awk '{print $4}' "/proc/$cur/stat" 2>/dev/null)"
+            [ -z "${ppid:-}" ] || [ "$ppid" = "0" ] || [ "$ppid" = "1" ] && break
+            local pname
+            pname="$(cat "/proc/$ppid/comm" 2>/dev/null)"
+            case "$pname" in
+                systemd|niri|bash|sh|zsh|fish|init|Xwayland|systemd-*) break ;;
+            esac
+            root="$ppid"; cur="$ppid"; i=$((i+1))
+        done
+        # 递归收集所有子孙
+        local all="$root"
+        local queue="$root"
+        while [ -n "$queue" ]; do
+            local next=""
+            local q
+            for q in $queue; do
+                local kids
+                kids="$(pgrep -P "$q" 2>/dev/null | tr '\n' ' ')"
+                next="$next $kids"
+                all="$all $kids"
+            done
+            queue="$next"
+        done
+        # shellcheck disable=SC2086
+        kill -9 $all 2>/dev/null
+        notify "强杀窗口 (进程树)" "已终止: ${TITLE:-$APPID} (root PID $root)"
+    else
+        kill -9 "$p" 2>/dev/null
+        notify "强杀窗口" "已终止: ${TITLE:-$APPID} (PID $p)"
+    fi
+}
+
+kill_target "$PID"
+exit 0
+KILLEOF
+    chmod +x "$NIRI_SCRIPTS_DIR/niri-force-kill-window"
+    log_info "  已部署 niri-force-kill-window"
+
+    # niri-binds — 快捷键速查
+    cat > "$NIRI_SCRIPTS_DIR/niri-binds" <<'BINDSEOF'
+#!/usr/bin/env bash
+# ============================================================================
+# niri-binds — 列出所有带 hotkey-overlay-title 的绑定，用 fzf 弹出速查
+#
+# 行为: 扫描 ~/.config/niri/*.kdl，提取「按键 / 说明 / 动作」三列，
+#       用 column 对齐后交给 fzf；选中后若有动作可执行，则执行。
+#
+# 来源: 参考 SHORiN-KiWATA/shorin-niri 的同名脚本行为重写
+# 依赖: fzf、某个终端(优先 kitty)
+# ============================================================================
+set -u
+
+CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/niri"
+[ -d "$CONF_DIR" ] || { echo "找不到 niri 配置目录: $CONF_DIR"; exit 1; }
+
+command -v fzf >/dev/null 2>&1 || { echo "需要 fzf: sudo dnf install -y fzf"; exit 1; }
+
+TMP="$(mktemp)"
+trap 'rm -f "$TMP"' EXIT
+
+# 提取绑定：只取带 hotkey-overlay-title= 的行
+grep -h 'hotkey-overlay-title' "$CONF_DIR"/*.kdl 2>/dev/null \
+| sed -E 's/^[[:space:]]+//' \
+| awk '{
+    key=$1;
+    title=""; action="";
+    if (match($0, /hotkey-overlay-title="([^"]*)"/, m)) title=m[1];
+    else if (match($0, /hotkey-overlay-title=null/)) title="(无说明)";
+    if (match($0, /\{[[:space:]]*(.*)[[:space:]]*\}[[:space:]]*$/, a)) action=a[1];
+    printf "%-28s %-40s %s\n", key, title, action;
+}' | sort -u > "$TMP"
+
+[ -s "$TMP" ] || { echo "未找到任何带说明的绑定"; exit 1; }
+
+SELECTED="$(fzf --prompt='快捷键 > ' \
+    --header='选中后会执行对应动作（危险操作请谨慎）' \
+    --height=100% --reverse < "$TMP")" || exit 0
+
+# 从选中行里取出动作部分
+ACTION="$(printf '%s' "$SELECTED" | awk -F'  +' '{print $NF}')"
+
+case "$ACTION" in
+    spawn\ *|spawn-sh\ *|"quit;"|close-window*|toggle-*|focus-*|move-*|maximize*|minimize*|fullscreen*|switch-*|center-*|expand-*|consume-*|expel-*|reset-*|set-*)
+        niri msg action ${ACTION%;} >/dev/null 2>&1 || true
+        ;;
+esac
+exit 0
+BINDSEOF
+    chmod +x "$NIRI_SCRIPTS_DIR/niri-binds"
+    log_info "  已部署 niri-binds"
+
+    chown -R "$REAL_USER:$REAL_USER" "$NIRI_SCRIPTS_DIR" 2>/dev/null
+    return 0
+}
+
+install_step "部署 niri 辅助脚本" deploy_niri_scripts
+
+# --- 13.5 输入法环境变量（fcitx5）---
+# 这一步写到 /etc/environment，对所有会话生效，
+# 比只写 shell 配置更可靠（GUI 程序也能拿到）
+setup_fcitx_env() {
+    if ! command -v fcitx5 >/dev/null 2>&1; then
+        log_warn "  fcitx5 未装上，跳过环境变量配置"
+        return 1
+    fi
+
+    local ENVFILE=/etc/environment
+    local changed=false
+
+    add_env() {
+        local line="$1"
+        if ! grep -qxF "$line" "$ENVFILE" 2>/dev/null; then
+            printf '%s\n' "$line" >> "$ENVFILE"
+            changed=true
+        fi
+    }
+
+    touch "$ENVFILE"
+    add_env 'GTK_IM_MODULE=fcitx'
+    add_env 'QT_IM_MODULE=fcitx'
+    add_env 'XMODIFIERS=@im=fcitx'
+    add_env 'SDL_IM_MODULE=fcitx'
+    add_env 'GLFW_IM_MODULE=ibus'
+
+    if [ "$changed" = true ]; then
+        log_info "  已写入输入法环境变量到 $ENVFILE"
+    else
+        log_info "  输入法环境变量已存在"
+    fi
+    return 0
+}
+
+install_step "配置 fcitx5 环境变量" setup_fcitx_env
+
+# --- 13.6 fcitx5 开机自启 ---
+# niri 不读 XDG autostart，所以要在 niri 配置里 spawn-at-startup。
+# 这里先装一个 wrapper，步骤 14 的配置里会引用它。
+setup_fcitx_autostart() {
+    if ! command -v fcitx5 >/dev/null 2>&1; then
+        return 1
+    fi
+    local BIN_DIR="$TARGET_HOME/.local/bin"
+    mkdir -p "$BIN_DIR"
+    cat > "$BIN_DIR/fcitx5-autostart" <<'FEOF'
+#!/usr/bin/env bash
+# 幂等启动 fcitx5：已在运行则不重复拉起
+if ! pgrep -x fcitx5 >/dev/null 2>&1; then
+    exec fcitx5 -d
+fi
+FEOF
+    chmod +x "$BIN_DIR/fcitx5-autostart"
+    chown -R "$REAL_USER:$REAL_USER" "$BIN_DIR" 2>/dev/null
+    log_info "  已部署 fcitx5 自启包装脚本: $BIN_DIR/fcitx5-autostart"
+    return 0
+}
+
+install_step "部署 fcitx5 自启脚本" setup_fcitx_autostart
+
+# ---------- 14. 写入完整 niri 配置（含完整快捷键） ----------
+# 写入 ~/.config/niri/config.kdl，包含:
+#   1. Noctalia 自启
+#   2. 输入法环境变量 + fcitx5 自启
+#   3. 完整的键位绑定（键位照 SHORiN-KiWATA/shorin-niri，
+#      命令换成 Noctalia v5 原生 IPC）
+log_info "步骤 14/14: 写入完整 niri 配置..."
 NIRI_CONF_DIR="$TARGET_HOME/.config/niri"
 NIRI_CONF="$NIRI_CONF_DIR/config.kdl"
 
-if [ -d "$NIRI_CONF_DIR" ] && [ -f "$NIRI_CONF" ]; then
-    log_info "  niri 配置已存在，保留不动: $NIRI_CONF"
-    log_info "  （如需应用最小配置，请先备份再删除该文件）"
-else
-    if mkdir -p "$NIRI_CONF_DIR"; then
-        cat > "$NIRI_CONF" <<'NIRIEOF'
+if mkdir -p "$NIRI_CONF_DIR"; then
+    # 已有配置先备份（这次是完整覆盖，备份以防万一）
+    if [ -f "$NIRI_CONF" ]; then
+        cp -a "$NIRI_CONF" "$NIRI_CONF.bak-$(date +%Y%m%d-%H%M%S)"
+        log_info "  已备份原配置: $NIRI_CONF.bak-*"
+    fi
+
+    cat > "$NIRI_CONF" <<'NIRIEOF'
 // ============================================================================
-// niri 最小配置 — 前置阶段版本
+// niri 完整配置 — Noctalia v5 版
 //
-// 目的：让首次登录就能用（Noctalia 起来 + 终端能开）。
-// 完整的桌面配置由 fedora-niri-noctalia-config 覆盖本文件。
+// 键位来源: SHORiN-KiWATA/shorin-niri
+//   键位完全照搬，仅把调用的命令换成 Noctalia v5 原生 IPC。
 //
-// 若不写这份配置，niri 会用内置默认值：
-//   - 不自启 Noctalia（无状态栏/壁纸/启动器）
-//   - 终端默认绑 alacritty（本前置脚本装的是 kitty）
+// 环境: Fedora 44 + niri + Noctalia v5 + fcitx5 + Chrome + Thunar
 // ============================================================================
 
-// 自启 Noctalia v5（提供状态栏、通知、壁纸、启动器、截图等）
+// ---------------------------------------------------------------------------
+// 自启动
+// ---------------------------------------------------------------------------
+
+// Noctalia v5 —— 提供状态栏、通知、壁纸、启动器、截图、剪贴板等
 spawn-at-startup "noctalia"
 
-// 输入法环境（fcitx5 若已装则生效）
+// fcitx5 中文输入法（包装脚本内部做了幂等检查，不会重复启动）
+spawn-at-startup "~/.local/bin/fcitx5-autostart"
+
+// ---------------------------------------------------------------------------
+// 环境变量
+// ---------------------------------------------------------------------------
+// 输入法相关变量已在脚本里写入 /etc/environment（对所有会话生效）。
+// 这里额外声明一份，保证 niri 会话内一定拿得到。
 environment {
     XMODIFIERS "@im=fcitx"
     QT_IM_MODULE "fcitx"
+    GTK_IM_MODULE "fcitx"
     SDL_IM_MODULE "fcitx"
 }
 
-// 最小快捷键：保证能开终端、关窗口、切工作区
+// ---------------------------------------------------------------------------
+// 输入设备
+// ---------------------------------------------------------------------------
+input {
+    keyboard {
+        // 键盘布局（需要改成别的布局就改这里）
+        xkb {
+            layout "us"
+        }
+    }
+
+    // 触摸板
+    touchpad {
+        tap
+        natural-scroll
+    }
+
+    // 鼠标
+    mouse {
+    }
+
+    // 焦点跟随鼠标（可选，觉得干扰就注释掉）
+    // focus-follows-mouse max-scroll-amount="0%"
+}
+
+// ---------------------------------------------------------------------------
+// 输出（显示器）
+// ---------------------------------------------------------------------------
+// 留空使用自动检测。多显示器时可用 `niri msg outputs` 查看名称后在此配置。
+
+// ---------------------------------------------------------------------------
+// 布局
+// ---------------------------------------------------------------------------
+layout {
+    // 窗口间空隙
+    gaps 8
+
+    // 默认列宽（50% = 半屏）
+    default-column-width { proportion 0.5; }
+
+    // 焦点环
+    focus-ring {
+        width 2
+        active-color "#bec2ff"
+        inactive-color "#46464f"
+    }
+
+    // 边框（不用时可设 off）
+    border {
+        off
+    }
+
+    // 窗口阴影
+    shadow {
+        on
+        softness 30
+        spread 5
+        offset x=0 y=5
+        color "#00000054"
+    }
+}
+
+// ---------------------------------------------------------------------------
+// 动画
+// ---------------------------------------------------------------------------
+animations {
+    // 关掉动画可提升低配机器流畅度
+    // off
+}
+
+// ---------------------------------------------------------------------------
+// 窗口规则
+// ---------------------------------------------------------------------------
+window-rule {
+    // 浮动窗口默认居中
+    match is-floating=true
+    // 不做特殊处理，保持默认
+}
+
+// 浏览器设为默认不浮动、占满一列（可按需删改）
+window-rule {
+    match app-id=r#"^(google-chrome|chromium|firefox)$"#
+    // 打开时默认占 50% 宽
+    default-column-width { proportion 0.5; }
+}
+
+// QQ / 微信（Flatpak 运行）设为浮动小窗，方便随时呼出
+window-rule {
+    match app-id=r#"^(com\.qq\.QQ|com\.tencent\.WeChat)$"#
+    open-floating true
+    default-floating-position x=100 y=100 relative-to="top-right"
+    default-column-width { proportion 0.35; }
+    default-window-height { proportion 0.7; }
+}
+
+// ---------------------------------------------------------------------------
+// 快捷键
+// ---------------------------------------------------------------------------
 binds {
-    // 终端（默认配置绑的是 alacritty，这里改成 kitty）
-    Mod+T { spawn "kitty"; }
+    // Mod = Super 键（键盘上画 Windows 徽标的那个）
 
-    // 关闭窗口
-    Mod+Q { close-window; }
+    // ========================================================================
+    // 一、快捷键速查
+    // ========================================================================
 
-    // 总览
-    Mod+O { toggle-overview; }
+    // 弹出快捷键速查菜单（fzf 列出所有带说明的绑定，选中可直接执行）
+    Mod+Shift+Slash hotkey-overlay-title="快捷键教程 Keybind tutorial" { spawn "~/.config/niri/scripts/niri-binds"; }
 
-    // 窗口间切换聚焦
-    Mod+Left  { focus-column-left; }
-    Mod+Down  { focus-window-down; }
-    Mod+Up    { focus-window-up; }
-    Mod+Right { focus-column-right; }
+    // ========================================================================
+    // 二、窗口切换 / 启动器 / 终端
+    // ========================================================================
 
-    // 工作区
-    Mod+U { focus-workspace-down; }
-    Mod+I { focus-workspace-up; }
-    Mod+1 { focus-workspace 1; }
-    Mod+2 { focus-workspace 2; }
-    Mod+3 { focus-workspace 3; }
+    // 窗口切换浮层（Noctalia 自带的 Alt+Tab 风格切换器）
+    Alt+Tab hotkey-overlay-title="快速跳转窗口 Quick window switch menu" { spawn "noctalia" "msg" "window-switcher"; }
 
-    // 退出 niri
-    Mod+Shift+E { quit; }
+    // 程序启动器（Noctalia 自带，可搜索应用 / 算数 / 关机）
+    Mod+Z hotkey-overlay-title="程序菜单 Applauncher" { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
+
+    // 临时浮动终端（单实例，再按会切回已有窗口）
+    Mod+Slash hotkey-overlay-title="临时终端 Quick Terminal" { spawn "kitty" "--single-instance" "--class" "quickterminal"; }
+
+    // 共享终端（单实例：已开则聚焦，不开新窗口）
+    Mod+T hotkey-overlay-title="共享终端 Terminal" { spawn "kitty" "--single-instance"; }
+
+    // 独立终端（每次都开新窗口）
+    Mod+return hotkey-overlay-title="独立终端 Terminal" { spawn "kitty"; }
+
+    // 浏览器（Google Chrome）
+    Mod+B hotkey-overlay-title="浏览器 Browser" { spawn "google-chrome-stable"; }
+
+    // 文件管理器（Thunar）
+    Mod+E hotkey-overlay-title="文档管理器 Filemanager" { spawn "thunar"; }
+
+    // ========================================================================
+    // 三、壁纸 / 主题（Noctalia 自带）
+    // ========================================================================
+
+    // 打开壁纸选择面板
+    Mod+Alt+W hotkey-overlay-title="切换壁纸 Change wallpaper" { spawn "noctalia" "msg" "panel-toggle" "wallpaper"; }
+
+    // 随机换一张壁纸
+    Mod+F10 hotkey-overlay-title="随机切换壁纸 Random wallpaper" { spawn "noctalia" "msg" "wallpaper-random"; }
+
+    // 切换浅色/深色主题
+    Mod+Alt+T hotkey-overlay-title="切换深浅色 Toggle theme mode" { spawn "noctalia" "msg" "theme-mode-toggle"; }
+
+    // ========================================================================
+    // 四、输入法
+    // ========================================================================
+
+    // 开/关 fcitx5（已运行则杀掉，未运行则拉起）
+    Mod+F1 hotkey-overlay-title="开关输入法 Toggle fcitx" { spawn-sh "pkill fcitx5 || fcitx5 -d"; }
+
+    // ========================================================================
+    // 五、状态栏
+    // ========================================================================
+
+    // 显示状态栏
+    Mod+F2 hotkey-overlay-title="状态栏 Bar (default)" { spawn "noctalia" "msg" "bar-show"; }
+
+    // 隐藏状态栏（临时看全屏内容时用）
+    Mod+Shift+F4 hotkey-overlay-title="隐藏任务栏 Hide bar" { spawn "noctalia" "msg" "bar-hide"; }
+
+    // 开关状态栏（显示/隐藏切换）
+    Mod+F4 hotkey-overlay-title="开关任务栏 Toggle bar" { spawn "noctalia" "msg" "bar-toggle"; }
+
+    // ========================================================================
+    // 六、截图（Noctalia 自带截图，不需要 grim/slurp）
+    // ========================================================================
+
+    // 截图翻译键位 → 改为「截图并标注」：框选后可直接在图上画箭头/文字
+    Mod+F11 hotkey-overlay-title="截图并标注 Screenshot & annotate" { spawn "noctalia" "msg" "screenshot-annotate"; }
+
+    // 截取所有显示器（多屏拼接成一张）
+    Mod+F12 hotkey-overlay-title="截取所有显示器 Screenshot All Monitor" { spawn "noctalia" "msg" "screenshot-fullscreen" "all"; }
+
+    // 选取区域截图
+    Mod+Alt+A hotkey-overlay-title="选取区域截图 Select screenshot" { spawn "noctalia" "msg" "screenshot-region"; }
+
+    // 截取当前聚焦的窗口
+    Mod+Alt+Ctrl+A hotkey-overlay-title="截取聚焦窗口 Focus-window screenshot" { spawn "noctalia" "msg" "screenshot-fullscreen"; }
+
+    // 截取指定显示器（会弹出显示器选择）
+    Mod+Alt+Ctrl+Shift+A hotkey-overlay-title="截取显示器 Monitor screenshot" { spawn "noctalia" "msg" "screenshot-fullscreen" "pick"; }
+
+    // Print 键：区域截图
+    Print hotkey-overlay-title=null { spawn "noctalia" "msg" "screenshot-region"; }
+    // Ctrl+Print：截当前窗口
+    Ctrl+Print hotkey-overlay-title=null { spawn "noctalia" "msg" "screenshot-fullscreen"; }
+    // Shift+Print：截所有显示器
+    Shift+Print hotkey-overlay-title=null { spawn "noctalia" "msg" "screenshot-fullscreen" "all"; }
+
+    // 截图后编辑：把剪贴板里的图用 satty 打开标注
+    Mod+Shift+S hotkey-overlay-title="编辑剪贴板中的截图 Edit the image after screenshot" { spawn-sh "wl-paste | satty -f -"; }
+
+    // ========================================================================
+    // 七、音量 / 亮度 / 媒体（Noctalia 自带 OSD，不需要 swayosd/brightnessctl）
+    // ========================================================================
+
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "noctalia" "msg" "volume-up"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "noctalia" "msg" "volume-down"; }
+    XF86AudioMute        allow-when-locked=true { spawn "noctalia" "msg" "volume-mute"; }
+    XF86AudioMicMute     allow-when-locked=true { spawn "noctalia" "msg" "mic-mute"; }
+
+    XF86MonBrightnessUp   allow-when-locked=true { spawn "noctalia" "msg" "brightness-up"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "noctalia" "msg" "brightness-down"; }
+
+    XF86AudioPlay hotkey-overlay-title="播放/暂停 Play/Pause" { spawn "noctalia" "msg" "media" "toggle"; }
+    XF86AudioNext hotkey-overlay-title="下一曲 Next track"   { spawn "noctalia" "msg" "media" "next"; }
+    XF86AudioPrev hotkey-overlay-title="上一曲 Previous track" { spawn "noctalia" "msg" "media" "previous"; }
+
+    // ========================================================================
+    // 八、锁屏 / 剪贴板 / 电源
+    // ========================================================================
+
+    // 锁屏（Noctalia 自带锁屏，不需要 hyprlock）
+    Mod+Alt+L hotkey-overlay-title="锁屏 Lock screen" { spawn "noctalia" "msg" "session" "lock"; }
+
+    // 剪贴板历史面板（Noctalia 自带，可搜索历史并粘贴）
+    Mod+Alt+V hotkey-overlay-title="剪贴板 Clipboard" repeat=false { spawn "noctalia" "msg" "panel-toggle" "clipboard"; }
+
+    // 电源菜单（锁屏 / 注销 / 重启 / 关机 / 待机）
+    Mod+Shift+P hotkey-overlay-title="电源菜单 powermenu" { spawn "noctalia" "msg" "panel-toggle" "session"; }
+
+    // ========================================================================
+    // 九、QQ / 微信（Flatpak 安装，用 flatpak run 启动）
+    // ========================================================================
+
+    // 快速呼出 QQ（已开则聚焦；Noctalia 支持应用聚焦）
+    Mod+Shift+Q hotkey-overlay-title="快速聚焦到QQ Quick focus QQ" { spawn "flatpak" "run" "com.qq.QQ"; }
+
+    // 快速呼出微信
+    Mod+Shift+W hotkey-overlay-title="快速聚焦到微信 Quick focus Wechat" { spawn "flatpak" "run" "com.tencent.WeChat"; }
+
+    // ========================================================================
+    // 十、通知 / 无线 / 系统开关（Noctalia 自带）
+    // ========================================================================
+
+    // 勿扰模式开关（屏蔽所有通知弹窗）
+    // 注: 不用 Mod+Shift+D（Shorin 里已被「把窗口从列里拆出」占用）
+    Mod+Alt+D hotkey-overlay-title="勿扰模式 Do not disturb" { spawn "noctalia" "msg" "notification-dnd-toggle"; }
+
+    // Wi-Fi 开关
+    Mod+Shift+B hotkey-overlay-title="Wi-Fi 开关 Toggle Wi-Fi" { spawn "noctalia" "msg" "wifi-toggle"; }
+
+    // 蓝牙开关
+    Mod+Shift+C hotkey-overlay-title="蓝牙开关 Toggle Bluetooth" { spawn "noctalia" "msg" "bluetooth-toggle"; }
+
+    // 夜灯（屏幕色温变暖，护眼）
+    Mod+Shift+N hotkey-overlay-title="夜灯 Night light" { spawn "noctalia" "msg" "nightlight-toggle"; }
+
+    // 防休眠（咖啡因：阻止屏幕关闭和系统待机）
+    // 注: 不用 Mod+Shift+A（Shorin 里已被「把窗口并入当前列」占用）
+    Mod+Alt+K hotkey-overlay-title="防休眠 Caffeine" { spawn "noctalia" "msg" "caffeine-toggle"; }
+
+    // 关闭显示器（不锁屏，动鼠标即恢复）
+    Mod+Shift+O hotkey-overlay-title="关闭显示器 Turn off monitors" { spawn "noctalia" "msg" "dpms-off"; }
+
+    // ========================================================================
+    // 十一、窗口总览 / 关闭 / 强杀
+    // ========================================================================
+
+    // 切换总览界面（缩放显示所有窗口和工作区）
+    Mod+O hotkey-overlay-title="切换总览界面 toggle overview" repeat=false { toggle-overview; }
+    Mod+G hotkey-overlay-title="切换总览界面 toggle overview" repeat=false { toggle-overview; }
+    Mod+Alt+G hotkey-overlay-title="切换总览界面 toggle overview" repeat=false { toggle-overview; }
+
+    // 关闭当前聚焦窗口（正常退出程序）
+    Mod+Q hotkey-overlay-title="关闭聚焦窗口 Close focus window" repeat=false { close-window; }
+
+    // 强制杀死窗口（鼠标点选）：程序卡死无响应时用，发 SIGKILL
+    Alt+F4 hotkey-overlay-title="强制杀死窗口 Force kill -9 window" repeat=false { spawn "~/.config/niri/scripts/niri-force-kill-window"; }
+
+    // 强制杀死窗口及其所有关联进程（治会自动重启的程序）
+    Alt+Shift+F4 hotkey-overlay-title="强制杀死窗口以及关联进程 Force kill -9 a window tree" repeat=false { spawn "~/.config/niri/scripts/niri-force-kill-window" "-f"; }
+
+    // 鼠标中键点击窗口即可关闭它
+    Mod+MouseMiddle hotkey-overlay-title="中键关闭窗口 Close window (middle click)" { close-window; }
+
+    // ========================================================================
+    // 十二、窗口聚焦（方向键 / vim 键）
+    // ========================================================================
+
+    Mod+Left  hotkey-overlay-title="聚焦左侧列 Focus column left" { focus-column-left; }
+    Mod+Down  hotkey-overlay-title="聚焦下方窗口 Focus window down" { focus-window-down; }
+    Mod+Up    hotkey-overlay-title="聚焦上方窗口 Focus window up" { focus-window-up; }
+    Mod+Right hotkey-overlay-title="聚焦右侧列 Focus column right" { focus-column-right; }
+
+    // vim 风格（同方向键效果）
+    Mod+H hotkey-overlay-title="聚焦左侧列 (vim)" { focus-column-left; }
+    Mod+J hotkey-overlay-title="聚焦下方窗口 (vim)" { focus-window-down; }
+    Mod+K hotkey-overlay-title="聚焦上方窗口 (vim)" { focus-window-up; }
+    Mod+L hotkey-overlay-title="聚焦右侧列 (vim)" { focus-column-right; }
+
+    // ========================================================================
+    // 十三、移动窗口 / 列
+    // ========================================================================
+
+    Mod+Ctrl+Left  hotkey-overlay-title="整列左移 Move column left" { move-column-left; }
+    Mod+Ctrl+Down  hotkey-overlay-title="窗口下移 Move window down" { move-window-down; }
+    Mod+Ctrl+Up    hotkey-overlay-title="窗口上移 Move window up" { move-window-up; }
+    Mod+Ctrl+Right hotkey-overlay-title="整列右移 Move column right" { move-column-right; }
+
+    Mod+Ctrl+H hotkey-overlay-title="整列左移 (vim)" { move-column-left; }
+    Mod+Ctrl+J hotkey-overlay-title="窗口下移 (vim)" { move-window-down; }
+    Mod+Ctrl+K hotkey-overlay-title="窗口上移 (vim)" { move-window-up; }
+    Mod+Ctrl+L hotkey-overlay-title="整列右移 (vim)" { move-column-right; }
+
+    Mod+Ctrl+A hotkey-overlay-title="整列左移 (a/d)" { move-column-left; }
+    Mod+Ctrl+D hotkey-overlay-title="整列右移 (a/d)" { move-column-right; }
+
+    // 跳到首尾列
+    Mod+Home hotkey-overlay-title="跳到第一列 Jump to first column" { focus-column-first; }
+    Mod+End  hotkey-overlay-title="跳到最后一列 Jump to last column" { focus-column-last; }
+    Mod+Ctrl+Home hotkey-overlay-title="把整列移到最前 Move column to first" { move-column-to-first; }
+    Mod+Ctrl+End  hotkey-overlay-title="把整列移到最后 Move column to last" { move-column-to-last; }
+
+    // ========================================================================
+    // 十四、跨显示器（多屏时生效，单屏无副作用）
+    // ========================================================================
+
+    Mod+Shift+Left  hotkey-overlay-title="聚焦左侧显示器 Focus monitor left" { focus-monitor-left; }
+    Mod+Shift+Down  hotkey-overlay-title="聚焦下方显示器 Focus monitor down" { focus-monitor-down; }
+    Mod+Shift+Up    hotkey-overlay-title="聚焦上方显示器 Focus monitor up" { focus-monitor-up; }
+    Mod+Shift+Right hotkey-overlay-title="聚焦右侧显示器 Focus monitor right" { focus-monitor-right; }
+
+    Mod+Shift+H hotkey-overlay-title="聚焦左侧显示器 (vim)" { focus-monitor-left; }
+    Mod+Shift+J hotkey-overlay-title="聚焦下方显示器 (vim)" { focus-monitor-down; }
+    Mod+Shift+K hotkey-overlay-title="聚焦上方显示器 (vim)" { focus-monitor-up; }
+    Mod+Shift+L hotkey-overlay-title="聚焦右侧显示器 (vim)" { focus-monitor-right; }
+
+    Mod+Shift+Ctrl+Left  hotkey-overlay-title="整列移到左显示器 Move column to monitor left" { move-column-to-monitor-left; }
+    Mod+Shift+Ctrl+Down  hotkey-overlay-title="整列移到下显示器 Move column to monitor down" { move-column-to-monitor-down; }
+    Mod+Shift+Ctrl+Up    hotkey-overlay-title="整列移到上显示器 Move column to monitor up" { move-column-to-monitor-up; }
+    Mod+Shift+Ctrl+Right hotkey-overlay-title="整列移到右显示器 Move column to monitor right" { move-column-to-monitor-right; }
+
+    Mod+Shift+Ctrl+H hotkey-overlay-title="整列移到左显示器 (vim)" { move-column-to-monitor-left; }
+    Mod+Shift+Ctrl+J hotkey-overlay-title="整列移到下显示器 (vim)" { move-column-to-monitor-down; }
+    Mod+Shift+Ctrl+K hotkey-overlay-title="整列移到上显示器 (vim)" { move-column-to-monitor-up; }
+    Mod+Shift+Ctrl+L hotkey-overlay-title="整列移到右显示器 (vim)" { move-column-to-monitor-right; }
+
+    // 整个工作区搬到另一台显示器
+    Mod+Shift+Alt+W hotkey-overlay-title="工作区移到上显示器 Move workspace up" { move-workspace-to-monitor-up; }
+    Mod+Shift+Alt+S hotkey-overlay-title="工作区移到下显示器 Move workspace down" { move-workspace-to-monitor-down; }
+    Mod+Shift+Alt+D hotkey-overlay-title="工作区移到右显示器 Move workspace right" { move-workspace-to-monitor-right; }
+    Mod+Shift+Alt+A hotkey-overlay-title="工作区移到左显示器 Move workspace left" { move-workspace-to-monitor-left; }
+
+    // ========================================================================
+    // 十五、工作区切换
+    // ========================================================================
+
+    Mod+Page_Down hotkey-overlay-title="切换到下一个工作区 Workspace down" { focus-workspace-down; }
+    Mod+Page_Up   hotkey-overlay-title="切换到上一个工作区 Workspace up" { focus-workspace-up; }
+    Mod+U hotkey-overlay-title="切换到下一个工作区 (u/i)" { focus-workspace-down; }
+    Mod+I hotkey-overlay-title="切换到上一个工作区 (u/i)" { focus-workspace-up; }
+
+    // 把当前列移到其它工作区
+    Mod+Ctrl+Page_Down hotkey-overlay-title="把整列移到下一工作区" { move-column-to-workspace-down; }
+    Mod+Ctrl+Page_Up   hotkey-overlay-title="把整列移到上一工作区" { move-column-to-workspace-up; }
+    Mod+Ctrl+U hotkey-overlay-title="把整列移到下一工作区 (u/i)" { move-column-to-workspace-down; }
+    Mod+Ctrl+I hotkey-overlay-title="把整列移到上一工作区 (u/i)" { move-column-to-workspace-up; }
+
+    // 鼠标滚轮切换工作区
+    Mod+Shift+WheelScrollDown hotkey-overlay-title="滚轮切换工作区 Change workspaces (down)" cooldown-ms=150 { focus-workspace-down; }
+    Mod+Shift+WheelScrollUp   hotkey-overlay-title="滚轮切换工作区 Change workspaces (up)" cooldown-ms=150 { focus-workspace-up; }
+    Mod+Ctrl+Shift+WheelScrollDown hotkey-overlay-title="滚轮把整列移到其它工作区 (down)" cooldown-ms=150 { move-column-to-workspace-down; }
+    Mod+Ctrl+Shift+WheelScrollUp   hotkey-overlay-title="滚轮把整列移到其它工作区 (up)" cooldown-ms=150 { move-column-to-workspace-up; }
+
+    // 鼠标滚轮左右切换聚焦
+    Mod+WheelScrollDown hotkey-overlay-title="滚轮切换聚焦 Change focus with wheel (right)" { focus-column-right; }
+    Mod+WheelScrollUp   hotkey-overlay-title="滚轮切换聚焦 Change focus with wheel (left)" { focus-column-left; }
+    Mod+Ctrl+WheelScrollDown hotkey-overlay-title="滚轮左右移动整列 (right)" { move-column-right; }
+    Mod+Ctrl+WheelScrollUp   hotkey-overlay-title="滚轮左右移动整列 (left)" { move-column-left; }
+
+    // 数字键直接跳到第 N 个工作区
+    Mod+1 hotkey-overlay-title="跳到工作区 1" { focus-workspace 1; }
+    Mod+2 hotkey-overlay-title="跳到工作区 2" { focus-workspace 2; }
+    Mod+3 hotkey-overlay-title="跳到工作区 3" { focus-workspace 3; }
+    Mod+4 hotkey-overlay-title="跳到工作区 4" { focus-workspace 4; }
+    Mod+5 hotkey-overlay-title="跳到工作区 5" { focus-workspace 5; }
+    Mod+6 hotkey-overlay-title="跳到工作区 6" { focus-workspace 6; }
+    Mod+7 hotkey-overlay-title="跳到工作区 7" { focus-workspace 7; }
+    Mod+8 hotkey-overlay-title="跳到工作区 8" { focus-workspace 8; }
+    Mod+9 hotkey-overlay-title="跳到工作区 9" { focus-workspace 9; }
+
+    // Ctrl+数字：把当前列移到第 N 个工作区
+    Mod+Ctrl+1 hotkey-overlay-title="把整列移到工作区 1" { move-column-to-workspace 1; }
+    Mod+Ctrl+2 hotkey-overlay-title="把整列移到工作区 2" { move-column-to-workspace 2; }
+    Mod+Ctrl+3 hotkey-overlay-title="把整列移到工作区 3" { move-column-to-workspace 3; }
+    Mod+Ctrl+4 hotkey-overlay-title="把整列移到工作区 4" { move-column-to-workspace 4; }
+    Mod+Ctrl+5 hotkey-overlay-title="把整列移到工作区 5" { move-column-to-workspace 5; }
+    Mod+Ctrl+6 hotkey-overlay-title="把整列移到工作区 6" { move-column-to-workspace 6; }
+    Mod+Ctrl+7 hotkey-overlay-title="把整列移到工作区 7" { move-column-to-workspace 7; }
+    Mod+Ctrl+8 hotkey-overlay-title="把整列移到工作区 8" { move-column-to-workspace 8; }
+    Mod+Ctrl+9 hotkey-overlay-title="把整列移到工作区 9" { move-column-to-workspace 9; }
+
+    // ========================================================================
+    // 十六、列内窗口操作
+    // ========================================================================
+
+    // 在相邻列之间移动单个窗口（不合并）
+    Mod+BracketLeft  hotkey-overlay-title="窗口移到左列 Move window left" { consume-or-expel-window-left; }
+    Mod+BracketRight hotkey-overlay-title="窗口移到右列 Move window right" { consume-or-expel-window-right; }
+    Mod+A hotkey-overlay-title="窗口移到左列 (a/d)" { consume-or-expel-window-left; }
+    Mod+D hotkey-overlay-title="窗口移到右列 (a/d)" { consume-or-expel-window-right; }
+
+    // 同列内上下切换窗口
+    Mod+W hotkey-overlay-title="切换到上方窗口 (s/w)" { focus-window-up; }
+    Mod+S hotkey-overlay-title="切换到下方窗口 (s/w)" { focus-window-down; }
+    Mod+Ctrl+S hotkey-overlay-title="窗口在列内下移 (s/w)" { move-window-down; }
+    Mod+Ctrl+W hotkey-overlay-title="窗口在列内上移 (s/w)" { move-window-up; }
+
+    // 合并两个窗口成一列（像标签页一样叠放）
+    Mod+Comma hotkey-overlay-title="把窗口并入当前列 Consume into column" { consume-window-into-column; }
+    // 把窗口从列里拆出来成为独立列
+    Mod+Period hotkey-overlay-title="把窗口从列里拆出 Expel from column" { expel-window-from-column; }
+    Mod+Shift+A hotkey-overlay-title="把窗口并入当前列 (shift+a/d)" { consume-window-into-column; }
+    Mod+Shift+D hotkey-overlay-title="把窗口从列里拆出 (shift+a/d)" { expel-window-from-column; }
+
+    // 当前列切换为标签页显示模式（多个窗口叠成标签）
+    Mod+X hotkey-overlay-title="列切换标签页模式 Toggle tabbed display" { toggle-column-tabbed-display; }
+    Mod+Shift+X hotkey-overlay-title="列切换标签页模式 (shift+x)" { toggle-column-tabbed-display; }
+
+    // 鼠标侧键切换同列内的窗口
+    Mod+MouseForward hotkey-overlay-title="鼠标侧键切上方窗口" { focus-window-up; }
+    Mod+MouseBack    hotkey-overlay-title="鼠标侧键切下方窗口" { focus-window-down; }
+
+    // ========================================================================
+    // 十七、窗口尺寸
+    // ========================================================================
+
+    // 在预设宽度间循环（1/3 → 1/2 → 2/3 → 全宽）
+    Mod+R hotkey-overlay-title="按预设切换宽度 Switch width" { switch-preset-column-width; }
+    // 在预设高度间循环
+    Mod+Shift+R hotkey-overlay-title="按预设切换高度 Switch height" { switch-preset-window-height; }
+    // 重置窗口高度为自动
+    Mod+Ctrl+R hotkey-overlay-title="重置窗口高度 Reset height" { reset-window-height; }
+
+    // 最大化当前列（占满可用宽度）
+    Mod+F hotkey-overlay-title="最大化 maximize" { maximize-column; }
+    // 全屏当前窗口（隐藏状态栏等所有 UI）
+    Mod+Alt+F hotkey-overlay-title="全屏 fullscreen" { fullscreen-window; }
+    // 最小化当前窗口（收进状态栏）
+    Mod+M hotkey-overlay-title="最小化 Minimize" { minimize-window; }
+
+    // 扩展到可用宽度
+    Mod+Ctrl+F hotkey-overlay-title="扩展到可用宽度 Expand to available width" { expand-column-to-available-width; }
+    // 当前列居中
+    Mod+C hotkey-overlay-title="当前列居中 Center column" { center-column; }
+    // 所有可见列一起居中
+    Mod+Ctrl+C hotkey-overlay-title="所有可见列居中 Center visible columns" { center-visible-columns; }
+
+    // 微调整列宽度（每次 5%）
+    Mod+Minus hotkey-overlay-title="列宽 -5%" { set-column-width "-5%"; }
+    Mod+Equal hotkey-overlay-title="列宽 +5%" { set-column-width "+5%"; }
+
+    // 微调窗口高度（每次 5%）
+    Mod+Shift+Minus hotkey-overlay-title="窗口高 -5%" { set-window-height "-5%"; }
+    Mod+Shift+Equal hotkey-overlay-title="窗口高 +5%" { set-window-height "+5%"; }
+
+    // ========================================================================
+    // 十八、浮动窗口
+    // ========================================================================
+
+    // 当前窗口在「平铺 / 浮动」之间切换
+    Mod+V hotkey-overlay-title="切换浮动 Toggle floating" { toggle-window-floating; }
+    // 在浮动窗口和平铺窗口之间切换焦点
+    Mod+Shift+V hotkey-overlay-title="浮动/平铺间切换焦点" { switch-focus-between-floating-and-tiling; }
+    Mod+N hotkey-overlay-title="浮动/平铺间切换焦点 (n)" { switch-focus-between-floating-and-tiling; }
+    Alt+grave hotkey-overlay-title="浮动/平铺间切换焦点 (alt+`)" { switch-focus-between-floating-and-tiling; }
+    Mod+Alt+N hotkey-overlay-title="浮动/平铺间切换焦点 (alt+n)" { switch-focus-between-floating-and-tiling; }
+
+    // ========================================================================
+    // 十九、杂项
+    // ========================================================================
+
+    // 临时把快捷键交给当前窗口（远程桌面/虚拟机里需要在宿主用组合键时）
+    Mod+Escape allow-inhibiting=false hotkey-overlay-title="把快捷键交给当前窗口 Inhibit shortcuts" { toggle-keyboard-shortcuts-inhibit; }
+
+    // 退出 niri（不是关机！只是退出桌面会话，回登录界面）
+    Mod+Shift+E hotkey-overlay-title="退出niri Quit niri" { quit; }
 }
 NIRIEOF
 
-        if chown -R "$REAL_USER:$REAL_USER" "$NIRI_CONF_DIR" 2>/dev/null; then
-            log_info "  最小 niri 配置已写入: $NIRI_CONF"
-        else
-            log_warn "  niri 配置已写入但 chown 失败，请手动修正:"
-            log_warn "    sudo chown -R $REAL_USER:$REAL_USER $NIRI_CONF_DIR"
-        fi
+    if chown -R "$REAL_USER:$REAL_USER" "$NIRI_CONF_DIR" 2>/dev/null; then
+        log_info "  完整 niri 配置已写入: $NIRI_CONF"
     else
-        log_warn "  无法创建 $NIRI_CONF_DIR，跳过 niri 配置"
-        FAILED_STEPS+=("写入 niri 配置")
+        log_warn "  配置已写入但 chown 失败，请手动修正:"
+        log_warn "    sudo chown -R $REAL_USER:$REAL_USER $NIRI_CONF_DIR"
     fi
+else
+    log_warn "  无法创建 $NIRI_CONF_DIR，跳过 niri 配置"
+    FAILED_STEPS+=("写入 niri 配置")
 fi
 
 # niri 配置语法自检
@@ -715,7 +1521,8 @@ if command -v niri >/dev/null 2>&1 && [ -f "$NIRI_CONF" ]; then
     if niri validate -c "$NIRI_CONF" >/dev/null 2>&1; then
         log_info "  niri 配置语法校验通过。"
     else
-        log_warn "  niri 配置语法校验未通过，请手动检查: niri validate -c $NIRI_CONF"
+        log_warn "  niri 配置语法校验未通过，请手动检查:"
+        log_warn "    niri validate -c $NIRI_CONF"
         FAILED_STEPS+=("niri 配置语法校验")
     fi
 fi
