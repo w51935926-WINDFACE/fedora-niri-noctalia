@@ -1207,11 +1207,11 @@ binds {
     Mod+Alt+Ctrl+Shift+A hotkey-overlay-title="截取显示器 Monitor screenshot" { spawn "noctalia" "msg" "screenshot-fullscreen" "pick"; }
 
     // Print 键：区域截图
-    Print hotkey-overlay-title=null { spawn "noctalia" "msg" "screenshot-region"; }
+    Print hotkey-overlay-title="区域截图 (Print 键) Screenshot region" { spawn "noctalia" "msg" "screenshot-region"; }
     // Ctrl+Print：截当前窗口
-    Ctrl+Print hotkey-overlay-title=null { spawn "noctalia" "msg" "screenshot-fullscreen"; }
+    Ctrl+Print hotkey-overlay-title="截当前窗口 (Ctrl+Print) Screenshot window" { spawn "noctalia" "msg" "screenshot-fullscreen"; }
     // Shift+Print：截所有显示器
-    Shift+Print hotkey-overlay-title=null { spawn "noctalia" "msg" "screenshot-fullscreen" "all"; }
+    Shift+Print hotkey-overlay-title="截所有显示器 (Shift+Print) Screenshot all" { spawn "noctalia" "msg" "screenshot-fullscreen" "all"; }
 
     // 截图后编辑：把剪贴板里的图用 satty 打开标注
     Mod+Shift+S hotkey-overlay-title="编辑剪贴板中的截图 Edit the image after screenshot" { spawn-sh "wl-paste | satty -f -"; }
@@ -1220,13 +1220,13 @@ binds {
     // 七、音量 / 亮度 / 媒体（Noctalia 自带 OSD，不需要 swayosd/brightnessctl）
     // ========================================================================
 
-    XF86AudioRaiseVolume allow-when-locked=true { spawn "noctalia" "msg" "volume-up"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn "noctalia" "msg" "volume-down"; }
-    XF86AudioMute        allow-when-locked=true { spawn "noctalia" "msg" "volume-mute"; }
-    XF86AudioMicMute     allow-when-locked=true { spawn "noctalia" "msg" "mic-mute"; }
+    XF86AudioRaiseVolume allow-when-locked=true hotkey-overlay-title="音量 +5% Volume up" { spawn "noctalia" "msg" "volume-up"; }
+    XF86AudioLowerVolume allow-when-locked=true hotkey-overlay-title="音量 -5% Volume down" { spawn "noctalia" "msg" "volume-down"; }
+    XF86AudioMute        allow-when-locked=true hotkey-overlay-title="静音开关 Mute toggle" { spawn "noctalia" "msg" "volume-mute"; }
+    XF86AudioMicMute     allow-when-locked=true hotkey-overlay-title="麦克风静音 Mic mute" { spawn "noctalia" "msg" "mic-mute"; }
 
-    XF86MonBrightnessUp   allow-when-locked=true { spawn "noctalia" "msg" "brightness-up"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "noctalia" "msg" "brightness-down"; }
+    XF86MonBrightnessUp   allow-when-locked=true hotkey-overlay-title="亮度 +5% Brightness up" { spawn "noctalia" "msg" "brightness-up"; }
+    XF86MonBrightnessDown allow-when-locked=true hotkey-overlay-title="亮度 -5% Brightness down" { spawn "noctalia" "msg" "brightness-down"; }
 
     XF86AudioPlay hotkey-overlay-title="播放/暂停 Play/Pause" { spawn "noctalia" "msg" "media" "toggle"; }
     XF86AudioNext hotkey-overlay-title="下一曲 Next track"   { spawn "noctalia" "msg" "media" "next"; }
