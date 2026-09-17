@@ -636,8 +636,9 @@ fi
 #     - 默认终端绑 alacritty(未装) -> 开不了终端
 #   写一个最小配置，让首次登录就能看到 Noctalia 界面并打开终端。
 #
-# 【本文件会被配置脚本覆盖】
-#   完整配置包含 layout/animations/blur/binds 等分文件，此处只做最小可用集。
+# 与完整配置的关系: 这是最小可用集，仅覆盖「能开机用」所需的部分。
+#   更完整的桌面配置(starship/yazi/完整快捷键/matugen 联动)可另行部署。
+log_info "步骤 13/13: 写入最小 niri 配置..."
 NIRI_CONF_DIR="$TARGET_HOME/.config/niri"
 NIRI_CONF="$NIRI_CONF_DIR/config.kdl"
 
