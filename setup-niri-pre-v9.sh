@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # ============================================================
 # Fedora 44 最小安装 — Niri/Noctalia v5 前置配置脚本 (AMD 版) v9
 # 使用方法: sudo bash setup-niri-pre-v9.sh
