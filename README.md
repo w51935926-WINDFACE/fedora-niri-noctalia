@@ -21,13 +21,20 @@
 | 9 | 添加 Terra 仓库（供 Greeter 使用） |
 | 10 | 安装 `greetd` 与 `noctalia-greeter` |
 | 11 | 配置 greetd 会话并启用服务 |
+| 12 | 安装 `kitty` + `fish` + JetBrains Maple Mono 字体，写入美化配置 |
+| 13 | 写入最小 niri 配置（自启 Noctalia、终端绑 kitty） |
+
+> 第 12、13 步的目的：让**首次登录就能用**。
+> 若不写这两步，niri 会使用内置默认配置 —— 不自启 Noctalia（没有状态栏、
+> 壁纸、启动器），且默认终端绑的是 `alacritty`（本脚本装的是 `kitty`），
+> 结果是一个「黑屏且打不开任何程序」的桌面。
 
 ---
 
 ## 使用方法
 
 ```bash
-sudo bash setup-niri-pre-v9.sh
+sudo bash setup-niri-pre-v10.sh
 ```
 
 **必须以 root 运行**（脚本会自行检查，非 root 直接退出）。
@@ -46,32 +53,39 @@ sudo bash setup-niri-pre-v9.sh
 
 ---
 
-## ⚠️ 重启后仍需手动做的一步
+## 重启后你会看到什么
 
-脚本跑完重启后，你会进入 Noctalia Greeter 登录界面，登进去是 **Niri 本体**。
+脚本跑完 `sudo systemctl reboot`，重启后：
 
-**但 Noctalia Shell 不会自动启动** —— 需要在 Niri 配置里加一行。
+1. **Noctalia Greeter 登录界面** —— 选择 `niri` 会话，输入密码登录
+2. **登录后即可用的桌面**：
+   - Noctalia 状态栏（脚本写入的 niri 配置自启了 Noctalia）
+   - `Mod+T` 打开 **kitty 终端**（已美化：80% 透明、无边框、光标拖尾）
+   - `Mod+Q` 关窗 / `Mod+O` 总览 / `Mod+1`~`3` 切工作区 / `Mod+Shift+E` 退出
 
-编辑 `~/.config/niri/config.kdl`：
+也就是说，**登录进去就是能用的**，不需要先进 TTY 补救。
 
-```kdl
-// 让 Noctalia 随会话启动
-spawn-at-startup "noctalia"
+### 前置脚本写入的配置文件
 
-// 建议同时加上键位绑定，否则面板/启动器无法唤出
-binds {
-    Mod+Space { spawn-sh "noctalia msg panel-toggle launcher"; }
-    Mod+S     { spawn-sh "noctalia msg panel-toggle control-center"; }
-    Mod+Comma { spawn-sh "noctalia msg settings-toggle"; }
-}
-```
+| 文件 | 内容 |
+|---|---|
+| `~/.config/kitty/kitty.conf` | kitty 美化配置（外观 + `shell fish` + 主题引用） |
+| `~/.config/kitty/current-theme.conf` | 初始配色（Noctalia 运行后会按壁纸更新） |
+| `~/.config/fish/config.fish` | fish 基础配置（完整配置由桌面配置脚本提供） |
+| `~/.config/niri/config.kdl` | niri 最小配置（Noctalia 自启 + 基础快捷键） |
 
-> 首次运行 Niri 时它才会自动生成默认配置。如果文件还不存在，先启动一次 Niri。
->
-> 完整配置（窗口圆角、模糊、壁纸策略等）见官方文档：
-> https://docs.noctalia.dev/noctalia/compositor-settings/niri/
+> 这些是**最小可用集**。更完整的桌面体验（starship 提示符、yazi、eza、
+> 完整快捷键、matugen 主题联动等）由配套的配置仓库提供，会覆盖这些文件。
 
-脚本末尾会检测这一步是否已完成并给出提示。
+### 若某一步降级了
+
+脚本末尾会逐项报告状态。常见降级情况：
+
+| 现象 | 原因 | 处理 |
+|---|---|---|
+| 字体回退成默认等宽 | 字体下载失败（网络/GitHub API） | 手动下载安装后 `fc-cache -fv` |
+| kitty 进去是 `sh`/`bash` 而非 fish | fish 安装失败 | `sudo dnf install fish` |
+| 没有状态栏 | niri 配置未写入 | 检查脚本步骤 13 日志 |
 
 ---
 

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # ============================================================
-# Fedora 44 最小安装 — Niri/Noctalia v5 前置配置脚本 (AMD 版) v9
-# 使用方法: sudo bash setup-niri-pre-v9.sh
+# Fedora 44 最小安装 — Niri/Noctalia v5 前置配置脚本 (AMD 版) v10
+# 使用方法: sudo bash setup-niri-pre-v10.sh
 #
-# 【本版范围】一路配到「重启即可进图形登录界面」，含 greetd 会话配置。
+# 【本版范围】一路配到「重启即可进图形登录界面，且首次登录就能用」。
+#   含: greetd 会话配置、kitty 终端 + 美化配置、最小 niri 配置(自启 Noctalia)
 #   最小安装无旧显示管理器，故官方文档 §4「Replace the current display manager
 #   safely」不适用，本脚本不含该步。
 #
@@ -69,6 +70,15 @@ else
     REAL_USER="root"
 fi
 
+# 目标用户家目录（后续写配置文件用）
+TARGET_HOME="$(getent passwd "$REAL_USER" 2>/dev/null | cut -d: -f6)"
+if [ -z "$TARGET_HOME" ] || [ ! -d "$TARGET_HOME" ]; then
+    log_error "无法解析用户 $REAL_USER 的家目录 (得到: '${TARGET_HOME:-空}')"
+    log_error "请确认以 sudo 方式运行，且该用户存在。"
+    exit 1
+fi
+log_info "目标家目录: $TARGET_HOME"
+
 FEDORA_VER=$(rpm -E %fedora)
 log_info "开始为 Fedora $FEDORA_VER 配置 Niri/Noctalia v5 环境..."
 log_info "目标用户: $REAL_USER"
@@ -79,11 +89,11 @@ if [ "$FEDORA_VER" -lt 44 ]; then
 fi
 
 # ---------- 1. 安装 dnf-plugins-core ----------
-log_info "步骤 1/11: 安装 dnf-plugins-core..."
+log_info "步骤 1/13: 安装 dnf-plugins-core..."
 install_step "安装 dnf-plugins-core" dnf install -y dnf-plugins-core
 
 # ---------- 2. 配置 fastestmirror ----------
-log_info "步骤 2/11: 配置 DNF fastestmirror..."
+log_info "步骤 2/13: 配置 DNF fastestmirror..."
 DNF_CONF="/etc/dnf/dnf.conf"
 if grep -q "^fastestmirror" "$DNF_CONF" 2>/dev/null; then
     sed -i 's/^fastestmirror=.*/fastestmirror=True/' "$DNF_CONF"
@@ -99,7 +109,7 @@ log_info "fastestmirror=True 已配置。"
 # ---------- 3. 添加 RPM Fusion 仓库 ----------
 # [VERIFIED] 主 release 包路径实测 200:
 #   mirrors.rpmfusion.org/{free,nonfree}/fedora/rpmfusion-{free,nonfree}-release-44.noarch.rpm
-log_info "步骤 3/11: 添加 RPM Fusion 仓库 (free + nonfree)..."
+log_info "步骤 3/13: 添加 RPM Fusion 仓库 (free + nonfree)..."
 install_step "添加 RPM Fusion 仓库" \
     dnf install -y \
     "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${FEDORA_VER}.noarch.rpm" \
@@ -113,7 +123,7 @@ install_step "添加 RPM Fusion 仓库" \
 #     rpmfusion-free.repo / -updates.repo / -updates-testing.repo
 #   => v1~v4 的 "dnf install rpmfusion-*-release-tainted" 是无效操作。
 #   tainted 由 .repo 内的段提供且默认 enabled=0；存在才启用，不存在直接跳过。
-log_info "步骤 4/11: 检查 RPM Fusion tainted 子仓库..."
+log_info "步骤 4/13: 检查 RPM Fusion tainted 子仓库..."
 
 enable_repo() {
     local repo="$1"
@@ -138,7 +148,7 @@ for r in rpmfusion-free-tainted rpmfusion-nonfree-tainted; do
 done
 
 # ---------- 5. 系统完整更新 ----------
-log_info "步骤 5/11: 执行系统完整更新..."
+log_info "步骤 5/13: 执行系统完整更新..."
 install_step "系统完整更新" dnf update -y --refresh
 
 # needs-restarting -r: 返回 1 表示需要重启。它检测不到纯内核更新，故补内核比对。
@@ -153,7 +163,7 @@ if ! dnf needs-restarting -r >/dev/null 2>&1 || \
 fi
 
 # ---------- 6. AMD 显卡驱动与工具 ----------
-log_info "步骤 6/11: 检查并安装 AMD 显卡驱动组件..."
+log_info "步骤 6/13: 检查并安装 AMD 显卡驱动组件..."
 lspci -k | grep -E "VGA|3D|Display" || log_warn "未检测到显卡信息。"
 
 install_step "安装 Mesa 核心驱动" \
@@ -190,7 +200,7 @@ else
 fi
 
 # ---------- 7. 视频编解码器 ----------
-log_info "步骤 7/11: 完善视频编解码器..."
+log_info "步骤 7/13: 完善视频编解码器..."
 
 install_step "安装 GStreamer 基础包" \
     dnf install -y gstreamer1-plugins-base gstreamer1-plugins-good
@@ -211,7 +221,7 @@ install_step "安装 libavcodec-freeworld" dnf install -y libavcodec-freeworld
 #   备选 (git 快照): sudo dnf copr enable lionheartp/Hyprland
 #                    sudo dnf install noctalia-git
 # [VERIFIED] niri 在 Fedora 官方仓库 (pkgdb 200, 含 F43/44/45)
-log_info "步骤 8/11: 安装 niri 与 Noctalia v5..."
+log_info "步骤 8/13: 安装 niri 与 Noctalia v5..."
 
 install_step "安装 niri (Fedora 官方仓库)" dnf install -y niri
 install_step "安装 noctalia v5 (Fedora 44+ 默认仓库)" dnf install -y noctalia
@@ -230,7 +240,7 @@ install_step "安装 noctalia v5 (Fedora 44+ 默认仓库)" dnf install -y nocta
 #   有资料称 dnf5 的 --repofrompath 不再做该替换，但此说法未经权威确认。
 #   稳妥做法是保留官方写法 + 加 shell 展开兜底，两者任一成功即可。
 #   （注意：若字面量未被展开，URL 会变成 .../terra$releasever，实测 HTTP 404）
-log_info "步骤 9/11: 添加 Terra 仓库 (为 Noctalia Greeter)..."
+log_info "步骤 9/13: 添加 Terra 仓库 (为 Noctalia Greeter)..."
 
 # 封装：避免「官方写法失败但兜底成功」留下假失败记录
 add_terra_repo() {
@@ -269,7 +279,7 @@ fi
 # ---------- 10. 安装 Noctalia Greeter ----------
 # [官方文档 · 原文] sudo dnf install noctalia-greeter
 # 依赖: greetd 与 D-Bus —— 文档 "Every installation needs greetd and D-Bus"
-log_info "步骤 10/11: 安装 Noctalia Greeter..."
+log_info "步骤 10/13: 安装 Noctalia Greeter..."
 install_step "安装 greetd" dnf install -y greetd
 install_step "安装 noctalia-greeter (Terra)" dnf install -y noctalia-greeter
 
@@ -282,7 +292,7 @@ install_step "安装 noctalia-greeter (Terra)" dnf install -y noctalia-greeter
 #   - 某些发行版包会自动配置 greetd；此时只需确认 command 指向 wrapper，其余不动
 #
 # 最小安装没有旧 DM，故官方 §4「Replace the current display manager safely」不适用。
-log_info "步骤 11/11: 配置 greetd 会话..."
+log_info "步骤 11/13: 配置 greetd 会话..."
 
 GREETER_SESSION_BIN="$(command -v noctalia-greeter-session 2>/dev/null || true)"
 
@@ -391,6 +401,324 @@ else
     install_step "启用 greetd 服务" systemctl enable greetd
 fi
 
+# ---------- 12. 安装 kitty + fish + 字体，写入完整美化配置 ----------
+# 为什么在前置阶段装终端？
+#   首次登录后 niri 用的是内置默认配置，默认终端快捷键绑 kitty。
+#   若没装终端，登录后是「黑屏且打不开任何程序」的桌面，
+#   只能 Ctrl+Alt+F3 切回 TTY 才能继续 —— 体验很差。
+#
+# 为什么连 fish 和字体一起装？
+#   完整美化配置引用了 shell=fish 与 JetBrains Maple Mono 字体。
+#   这两样不存在的话，kitty 会静默回退（默认 shell、默认字体），
+#   等于「配了但没生效」。所以一并准备好，保证美化真正落地。
+log_info "步骤 12/13: 安装 kitty + fish + 字体..."
+
+install_step "安装 kitty 终端与 fish" dnf install -y kitty fish
+
+# --- 下载 JetBrains Maple Mono 字体 ---
+# 来源: https://github.com/SpaceTimee/Fusion-JetBrainsMapleMono
+#       (JetBrains Mono + Maple Mono 合并字体，带 Nerd Font 图标)
+FONT_DIR="$TARGET_HOME/.local/share/fonts/JetBrainsMapleMono"
+
+install_font() {
+    if fc-list 2>/dev/null | grep -qi "JetBrains Maple Mono"; then
+        log_info "  JetBrains Maple Mono 已安装，跳过"
+        return 0
+    fi
+
+    # 依赖检查
+    for cmd in curl jq unzip fc-cache; do
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            log_warn "  缺少 $cmd，无法自动安装字体"
+            return 1
+        fi
+    done
+
+    mkdir -p "$FONT_DIR"
+    local tmpd; tmpd="$(mktemp -d)"
+    local api="https://api.github.com/repos/SpaceTimee/Fusion-JetBrainsMapleMono/releases/latest"
+
+    log_info "  查询最新版本..."
+    local rel; rel="$(curl -fsSL --max-time 30 "$api" 2>/dev/null || echo "")"
+    if [ -z "$rel" ]; then
+        log_warn "  无法访问 GitHub API（网络问题或限流）"
+        rm -rf "$tmpd"
+        return 1
+    fi
+
+    # 优先 Nerd Font 版，回退任意 zip
+    local url; url="$(printf '%s' "$rel" | jq -r '[.assets[] | select(.name | test("NF.*\\.zip$"))] | .[0].browser_download_url // empty' 2>/dev/null)"
+    if [ -z "$url" ]; then
+        url="$(printf '%s' "$rel" | jq -r '[.assets[] | select(.name | test("\\.zip$"))] | .[0].browser_download_url // empty' 2>/dev/null)"
+    fi
+
+    if [ -z "$url" ]; then
+        log_warn "  未能匹配到字体压缩包"
+        log_warn "  手动下载: https://github.com/SpaceTimee/Fusion-JetBrainsMapleMono/releases"
+        rm -rf "$tmpd"
+        return 1
+    fi
+
+    log_info "  下载: $(basename "$url")"
+    if ! curl -fsSL --max-time 300 -o "$tmpd/font.zip" "$url"; then
+        log_warn "  下载失败（网络问题）"
+        rm -rf "$tmpd"
+        return 1
+    fi
+
+    if ! unzip -o -q "$tmpd/font.zip" -d "$FONT_DIR" 2>/dev/null; then
+        log_warn "  解压失败"
+        rm -rf "$tmpd"
+        return 1
+    fi
+
+    # 扁平化：把子目录里的字体提到根，避免 kitty 找不到
+    find "$FONT_DIR" -mindepth 2 -name "*.ttf" -exec mv -f {} "$FONT_DIR/" \; 2>/dev/null
+    find "$FONT_DIR" -mindepth 2 -name "*.otf" -exec mv -f {} "$FONT_DIR/" \; 2>/dev/null
+    rm -rf "${FONT_DIR:?}"/*/ 2>/dev/null
+
+    chown -R "$REAL_USER:$REAL_USER" "$TARGET_HOME/.local" 2>/dev/null
+    fc-cache -f "$FONT_DIR" >/dev/null 2>&1
+    log_info "  字体已安装并刷新缓存"
+    rm -rf "$tmpd"
+    return 0
+}
+
+install_step "安装 JetBrains Maple Mono 字体" install_font
+
+# 字体回退（官方仓库，万一 Maple Mono 装不上至少有个像样的等宽字体）
+install_step "安装 JetBrains Mono (回退字体)" dnf install -y jetbrains-mono-fonts
+
+# --- 写入完整 kitty 美化配置 ---
+# 来源: SHORiN-KiWATA/shorin-arch-setup 的 kitty.conf
+# 移除项: include dank-tabs.conf / dank-theme.conf
+#   (属 AUR 插件 kitty-dank-tabs，Fedora 无此包)
+KITTY_CONF_DIR="$TARGET_HOME/.config/kitty"
+if mkdir -p "$KITTY_CONF_DIR"; then
+    cat > "$KITTY_CONF_DIR/kitty.conf" <<'KITTYEOF'
+# ============================================================================
+# kitty 终端配置 — 完整美化版
+#
+# 来源: SHORiN-KiWATA/shorin-arch-setup 的 kitty.conf (Fedora 适配)
+#
+# 依赖(前置脚本已一并安装):
+#   - fish                   : shell
+#   - JetBrains Maple Mono   : 字体
+#   - current-theme.conf     : 配色(本脚本写入初始值，之后可由 Noctalia 更新)
+#
+# 已移除: include dank-tabs.conf / dank-theme.conf
+#         (属 AUR 插件 kitty-dank-tabs，Fedora 无此包)
+# ============================================================================
+
+# --- 外观 ---
+window_padding_width 5
+hide_window_decorations yes
+background_opacity 0.8
+font_family JetBrains Maple Mono
+font_size 13.5
+remember_window_size no
+confirm_os_window_close 0
+
+# --- 光标 ---
+cursor_trail 1
+cursor_shape block
+shell_integration no-cursor
+
+# --- Shell ---
+shell fish
+
+# --- 配色主题 ---
+# Noctalia 运行后会把壁纸配色写回此文件(通过其 matugen 模板机制)
+include current-theme.conf
+KITTYEOF
+
+    # 初始配色（Noctalia/Matugen 的默认深色方案，之后会被覆盖）
+    cat > "$KITTY_CONF_DIR/current-theme.conf" <<'THEMEEOF'
+# 初始配色 — Noctalia 运行后会按壁纸重新生成
+# 改配色请改 ~/.config/noctalia/templates/ 下的模板，不要直接改本文件
+
+color0 #131316
+color1 #ffb4ab
+color2 #bec2ff
+color3 #c5c4dd
+color4 #e7b9d5
+color5 #bec2ff
+color6 #c5c4dd
+color7 #e5e1e6
+color8 #91909a
+color9 #ffb4ab
+color10 #bec2ff
+color11 #c5c4dd
+color12 #e7b9d5
+color13 #bec2ff
+color14 #c5c4dd
+color15 #e5e1e6
+
+cursor                #e5e1e6
+cursor_text_color     #131316
+background            #131316
+foreground            #e5e1e6
+selection_foreground  #c7c5d0
+selection_background  #46464f
+active_border_color   #bec2ff
+inactive_border_color #46464f
+url_color             #bec2ff
+
+active_tab_foreground   #1f2578
+active_tab_background   #bec2ff
+inactive_tab_foreground #c7c5d0
+inactive_tab_background #46464f
+cursor_trail_color      #c7c5d0
+THEMEEOF
+
+    # 归属权交还给目标用户（脚本以 root 运行，否则配置文件属 root）
+    if chown -R "$REAL_USER:$REAL_USER" "$KITTY_CONF_DIR" 2>/dev/null; then
+        log_info "  kitty 美化配置已写入: $KITTY_CONF_DIR/"
+        log_info "    - kitty.conf (外观 + fish + 主题引用)"
+        log_info "    - current-theme.conf (初始配色)"
+    else
+        log_warn "  kitty 配置已写入但 chown 失败，请手动修正属主:"
+        log_warn "    sudo chown -R $REAL_USER:$REAL_USER $KITTY_CONF_DIR"
+        FAILED_STEPS+=("kitty 配置属主修正")
+    fi
+else
+    log_warn "  无法创建 $KITTY_CONF_DIR，跳过 kitty 配置"
+    FAILED_STEPS+=("写入 kitty 配置")
+fi
+
+# --- fish 基础配置 ---
+# 只做最小可用配置；完整配置(starship/zoxide/别名)由后续的桌面配置提供
+FISH_DIR="$TARGET_HOME/.config/fish"
+if [ ! -f "$FISH_DIR/config.fish" ]; then
+    if mkdir -p "$FISH_DIR"; then
+        cat > "$FISH_DIR/config.fish" <<'FISHEOF'
+# ============================================================================
+# fish 基础配置 — 前置阶段版本
+# 完整配置(starship 提示符、zoxide、别名、f 函数等)由桌面配置脚本提供
+# ============================================================================
+
+if status is-interactive
+    # 交互式会话设置
+end
+
+set fish_greeting ""
+fish_add_path ~/.local/bin
+FISHEOF
+        chown -R "$REAL_USER:$REAL_USER" "$FISH_DIR" 2>/dev/null
+        log_info "  fish 基础配置已写入: $FISH_DIR/config.fish"
+    else
+        log_warn "  无法创建 $FISH_DIR，跳过 fish 配置"
+    fi
+else
+    log_info "  fish 配置已存在，保留不动"
+fi
+
+# --- 把 fish 设为默认 shell（可选但推荐）---
+if command -v fish >/dev/null 2>&1; then
+    CURRENT_SHELL="$(getent passwd "$REAL_USER" | cut -d: -f7)"
+    FISH_PATH="$(command -v fish)"
+    if [ "$CURRENT_SHELL" != "$FISH_PATH" ]; then
+        if chsh -s "$FISH_PATH" "$REAL_USER" 2>/dev/null; then
+            log_info "  已将 $REAL_USER 的默认 shell 设为 fish"
+        else
+            log_warn "  设置默认 shell 失败，可手动执行:"
+            log_warn "    chsh -s $FISH_PATH $REAL_USER"
+        fi
+    else
+        log_info "  默认 shell 已是 fish"
+    fi
+fi
+
+# ---------- 13. 写入最小 niri 配置 ----------
+# 为什么要写？
+#   不写的话 niri 用内置默认配置:
+#     - 不会自启 Noctalia  -> 没有状态栏、没有壁纸、没有启动器
+#     - 默认终端绑 alacritty(未装) -> 开不了终端
+#   写一个最小配置，让首次登录就能看到 Noctalia 界面并打开终端。
+#
+# 【本文件会被配置脚本覆盖】
+#   完整配置包含 layout/animations/blur/binds 等分文件，此处只做最小可用集。
+NIRI_CONF_DIR="$TARGET_HOME/.config/niri"
+NIRI_CONF="$NIRI_CONF_DIR/config.kdl"
+
+if [ -d "$NIRI_CONF_DIR" ] && [ -f "$NIRI_CONF" ]; then
+    log_info "  niri 配置已存在，保留不动: $NIRI_CONF"
+    log_info "  （如需应用最小配置，请先备份再删除该文件）"
+else
+    if mkdir -p "$NIRI_CONF_DIR"; then
+        cat > "$NIRI_CONF" <<'NIRIEOF'
+// ============================================================================
+// niri 最小配置 — 前置阶段版本
+//
+// 目的：让首次登录就能用（Noctalia 起来 + 终端能开）。
+// 完整的桌面配置由 fedora-niri-noctalia-config 覆盖本文件。
+//
+// 若不写这份配置，niri 会用内置默认值：
+//   - 不自启 Noctalia（无状态栏/壁纸/启动器）
+//   - 终端默认绑 alacritty（本前置脚本装的是 kitty）
+// ============================================================================
+
+// 自启 Noctalia v5（提供状态栏、通知、壁纸、启动器、截图等）
+spawn-at-startup "noctalia"
+
+// 输入法环境（fcitx5 若已装则生效）
+environment {
+    XMODIFIERS "@im=fcitx"
+    QT_IM_MODULE "fcitx"
+    SDL_IM_MODULE "fcitx"
+}
+
+// 最小快捷键：保证能开终端、关窗口、切工作区
+binds {
+    // 终端（默认配置绑的是 alacritty，这里改成 kitty）
+    Mod+T { spawn "kitty"; }
+
+    // 关闭窗口
+    Mod+Q { close-window; }
+
+    // 总览
+    Mod+O { toggle-overview; }
+
+    // 窗口间切换聚焦
+    Mod+Left  { focus-column-left; }
+    Mod+Down  { focus-window-down; }
+    Mod+Up    { focus-window-up; }
+    Mod+Right { focus-column-right; }
+
+    // 工作区
+    Mod+U { focus-workspace-down; }
+    Mod+I { focus-workspace-up; }
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+
+    // 退出 niri
+    Mod+Shift+E { quit; }
+}
+NIRIEOF
+
+        if chown -R "$REAL_USER:$REAL_USER" "$NIRI_CONF_DIR" 2>/dev/null; then
+            log_info "  最小 niri 配置已写入: $NIRI_CONF"
+        else
+            log_warn "  niri 配置已写入但 chown 失败，请手动修正:"
+            log_warn "    sudo chown -R $REAL_USER:$REAL_USER $NIRI_CONF_DIR"
+        fi
+    else
+        log_warn "  无法创建 $NIRI_CONF_DIR，跳过 niri 配置"
+        FAILED_STEPS+=("写入 niri 配置")
+    fi
+fi
+
+# niri 配置语法自检
+if command -v niri >/dev/null 2>&1 && [ -f "$NIRI_CONF" ]; then
+    if niri validate -c "$NIRI_CONF" >/dev/null 2>&1; then
+        log_info "  niri 配置语法校验通过。"
+    else
+        log_warn "  niri 配置语法校验未通过，请手动检查: niri validate -c $NIRI_CONF"
+        FAILED_STEPS+=("niri 配置语法校验")
+    fi
+fi
+
 # ---------- 完成 ----------
 echo ""
 log_info "=========================================="
@@ -411,45 +739,56 @@ log_info ""
 log_info "greetd 已配置并启用，重启后应直接进入 Noctalia Greeter 登录界面。"
 log_info ""
 
-# ---------- 登录后仍需手动做的一步：niri 里自启 Noctalia ----------
-# [官方文档 · Noctalia / Compositor settings / Niri]
-#   https://docs.noctalia.dev/noctalia/compositor-settings/niri/
-#   "Add the following settings to your Niri configuration file
-#    (usually located at ~/.config/niri/config.kdl)"
-#     Autostart Noctalia:  spawn-at-startup "noctalia"
-#   不加这行，登录进去只有 niri 本体，Noctalia Shell 不会随会话启动。
-NIRI_CONF="$(getent passwd "$REAL_USER" 2>/dev/null | cut -d: -f6)/.config/niri/config.kdl"
-
+# ---------- 前置阶段已就绪的东西 ----------
 log_info "=========================================================="
-log_info "⚠ 登录 niri 后还需一步：让 Noctalia 随会话启动"
-log_info "=========================================================="
-if [ -f "$NIRI_CONF" ] && grep -q 'spawn-at-startup.*noctalia' "$NIRI_CONF"; then
-    log_info "已检测到 $NIRI_CONF 里包含自启配置，无需处理。"
-else
-    if [ ! -f "$NIRI_CONF" ]; then
-        log_info "niri 配置文件尚不存在（首次运行 niri 时会自动生成）:"
-        log_info "  $NIRI_CONF"
-    else
-        log_info "niri 配置里尚未配置 Noctalia 自启:"
-        log_info "  $NIRI_CONF"
-    fi
-    log_info ""
-    log_info "请在该文件中加入以下两行（官方文档原文）:"
-    log_info '  spawn-at-startup "noctalia"'
-    log_info ""
-    log_info "建议同时加入键位绑定，否则面板/启动器无法唤出:"
-    log_info "  binds {"
-    log_info '      Mod+Space { spawn-sh "noctalia msg panel-toggle launcher"; }'
-    log_info '      Mod+S     { spawn-sh "noctalia msg panel-toggle control-center"; }'
-    log_info '      Mod+Comma { spawn-sh "noctalia msg settings-toggle"; }'
-    log_info "  }"
-    log_info ""
-    log_info "完整配置参考:"
-    log_info "  https://docs.noctalia.dev/noctalia/compositor-settings/niri/"
-fi
+log_info "首次登录后的状态（前置脚本已为你准备好）"
 log_info "=========================================================="
 log_info ""
-log_info "登录界面未出现时的排查命令（切到 TTY 执行）:"
+
+# kitty
+if [ -f "$TARGET_HOME/.config/kitty/kitty.conf" ]; then
+    log_info "✅ 终端 kitty — 已安装并配置（透明 80%、无边框、光标拖尾）"
+    if grep -q '^shell fish' "$TARGET_HOME/.config/kitty/kitty.conf" 2>/dev/null; then
+        if command -v fish >/dev/null 2>&1; then
+            log_info "    └─ shell: fish ✅"
+        else
+            log_info "    └─ shell: fish ⚠ 未安装，kitty 会回退默认 shell"
+        fi
+    fi
+    if fc-list 2>/dev/null | grep -qi "JetBrains Maple Mono"; then
+        log_info "    └─ 字体: JetBrains Maple Mono ✅"
+    else
+        log_info "    └─ 字体: ⚠ Maple Mono 未装上，将回退默认等宽字体"
+    fi
+    log_info "    └─ 配色: current-theme.conf ✅（Noctalia 运行后会按壁纸更新）"
+else
+    log_warn "⚠ kitty 配置未写入，请检查上面的步骤 12 日志"
+fi
+log_info ""
+
+# niri 最小配置
+if [ -f "$NIRI_CONF" ] && grep -q 'spawn-at-startup.*noctalia' "$NIRI_CONF"; then
+    log_info "✅ niri 最小配置 — 已写入（含 Noctalia 自启）"
+    log_info "    └─ 文件: $NIRI_CONF"
+    log_info "    └─ 快捷键: Mod+T 终端 / Mod+Q 关窗 / Mod+O 总览 / Mod+1-3 工作区"
+else
+    log_warn "⚠ niri 配置未写入或未含 Noctalia 自启，请检查步骤 13"
+fi
+log_info ""
+log_info "=========================================================="
+log_info "重启后你能做什么"
+log_info "=========================================================="
+log_info "  1. Greeter 登录界面 → 选择 niri 会话 → 登录"
+log_info "  2. 会看到 Noctalia 状态栏（顶部/底部）"
+log_info "  3. Mod+T 打开 kitty 终端（已美化）"
+log_info "  4. 用终端继续后续操作"
+log_info ""
+log_info "【可选】更完整的桌面配置（starship 提示符、yazi、eza、别名、"
+log_info "        完整快捷键、matugen 主题联动等）:"
+log_info "  git clone <fedora-niri-noctalia-config 仓库>"
+log_info "  cd fedora-niri-noctalia-config && ./install.sh"
+log_info ""
+log_info "登录界面未出现时的排查命令（Ctrl+Alt+F3 切到 TTY）:"
 log_info "  systemctl status greetd"
 log_info "  journalctl -u greetd -b --no-pager | tail -50"
 log_info "  cat /etc/greetd/config.toml"
